@@ -1,5 +1,6 @@
 import Groq from "groq-sdk"
 import { NextRequest, NextResponse } from "next/server"
+import { saveMockProject } from "@/lib/mock-storage"
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
       },
       {
         role: "user",
-        content: `Analyze this API schema and return mock endpoints.
+        content: `Analyze this API schema and return mock endpoints with realistic mock data.
 
 Schema:
 ${schema}
@@ -33,7 +34,7 @@ Return ONLY this JSON structure:
       "method": "GET",
       "path": "/resource",
       "description": "what this endpoint does",
-      "mockResponse": { "example": "response body" }
+      "mockResponse": { "realistic": "response data here" }
     }
   ]
 }`,
@@ -47,10 +48,19 @@ Return ONLY this JSON structure:
   try {
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim()
     const parsed = JSON.parse(cleaned)
-    return NextResponse.json(parsed)
-  } catch {
+
+    // Save to in-memory storage
+    const mockId = saveMockProject(parsed.endpoints)
+
+    return NextResponse.json({ 
+      ...parsed, 
+      mockId,
+      success: true
+    })
+  } catch (error) {
+    console.error("Parse error:", error)
     return NextResponse.json(
-      { error: "Failed to parse response", raw: text },
+      { error: "Failed to parse response" },
       { status: 500 }
     )
   }
