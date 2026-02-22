@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: mocklab_postgres
+    environment:
+      POSTGRES_USER: mocklab
+      POSTGRES_PASSWORD: mocklab_pass
+      POSTGRES_DB: mocklab_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - mocklab_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mocklab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: mocklab_backend
+    environment:
+      DATABASE_URL: postgresql://mocklab:mocklab_pass@postgres:5432/mocklab_db
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      DEBUG: "True"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+    command: python main.py
+
+  frontend:
+    working_dir: /app
+    container_name: mocklab_frontend
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+
+volumes:
+  mocklab_postgres_data:
