@@ -35,15 +35,14 @@ Return a JSON array with these fields for each endpoint:
 
 Return ONLY valid JSON array, no markdown blocks, no extra text."""
 
-        response = client.messages.create(
-            model="llama-3.3-70b-versatile",
+        chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            model="llama-3.3-70b-versatile",
         )
         
         # Parse response
         import json
-        content = response.content[0].text
+        content = chat_completion.choices[0].message.content
         
         # Handle markdown code blocks
         if content.startswith("```json"):
@@ -145,15 +144,14 @@ Return a JSON array with these fields for each endpoint:
 
 Return ONLY valid JSON array, no markdown blocks, no extra text."""
 
-        response = client.messages.create(
-            model="llama-3.3-70b-versatile",
+        chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=2000,
+            model="llama-3.3-70b-versatile",
         )
         
         # Parse response
         import json
-        content = response.content[0].text
+        content = chat_completion.choices[0].message.content
         
         # Handle markdown code blocks
         if content.startswith("```json"):
