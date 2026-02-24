@@ -1,5 +1,24 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getMockEndpoint } from "@/lib/mock-storage"
+
+// Helper function to find matching endpoint
+function findEndpoint(endpoints: any[], method: string, path: string) {
+  return endpoints.find(
+    (ep) => ep.method === method && ep.path === path
+  )
+}
+
+// Helper to fetch project from backend
+async function getProjectFromBackend(projectId: string) {
+  const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  try {
+    const response = await fetch(`${backendUrl}/api/projects/${projectId}`)
+    if (!response.ok) return null
+    return await response.json()
+  } catch (error) {
+    console.error("Failed to fetch project from backend:", error)
+    return null
+  }
+}
 
 // Dynamic route handler for mock endpoints
 // URL format: /api/mock/[projectId]/[...path]
@@ -28,8 +47,16 @@ export async function GET(
 
     console.log(`📍 Looking for: ${projectId} -> GET ${path}`)
 
-    const endpoint = getMockEndpoint(projectId, "GET", path)
+    // Fetch project from backend
+    const project = await getProjectFromBackend(projectId)
+    if (!project) {
+      return NextResponse.json(
+        { error: `Project ${projectId} not found` },
+        { status: 404 }
+      )
+    }
 
+    const endpoint = findEndpoint(project.endpoints, "GET", path)
     if (!endpoint) {
       return NextResponse.json(
         { error: `Endpoint ${path} not found in project ${projectId}` },
@@ -70,8 +97,15 @@ export async function POST(
     const projectId = slug[0]
     const path = "/" + slug.slice(1).join("/")
 
-    const endpoint = getMockEndpoint(projectId, "POST", path)
+    const project = await getProjectFromBackend(projectId)
+    if (!project) {
+      return NextResponse.json(
+        { error: `Project ${projectId} not found` },
+        { status: 404 }
+      )
+    }
 
+    const endpoint = findEndpoint(project.endpoints, "POST", path)
     if (!endpoint) {
       return NextResponse.json(
         { error: `Endpoint ${path} not found` },
@@ -112,8 +146,15 @@ export async function PUT(
     const projectId = slug[0]
     const path = "/" + slug.slice(1).join("/")
 
-    const endpoint = getMockEndpoint(projectId, "PUT", path)
+    const project = await getProjectFromBackend(projectId)
+    if (!project) {
+      return NextResponse.json(
+        { error: `Project ${projectId} not found` },
+        { status: 404 }
+      )
+    }
 
+    const endpoint = findEndpoint(project.endpoints, "PUT", path)
     if (!endpoint) {
       return NextResponse.json(
         { error: `Endpoint ${path} not found` },
@@ -154,8 +195,15 @@ export async function DELETE(
     const projectId = slug[0]
     const path = "/" + slug.slice(1).join("/")
 
-    const endpoint = getMockEndpoint(projectId, "DELETE", path)
+    const project = await getProjectFromBackend(projectId)
+    if (!project) {
+      return NextResponse.json(
+        { error: `Project ${projectId} not found` },
+        { status: 404 }
+      )
+    }
 
+    const endpoint = findEndpoint(project.endpoints, "DELETE", path)
     if (!endpoint) {
       return NextResponse.json(
         { error: `Endpoint ${path} not found` },
