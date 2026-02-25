@@ -1,12 +1,23 @@
 "use client"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/app/context/AuthContext"
 
 export default function Dashboard() {
+  const router = useRouter()
+  const { user, token, logout, isLoading } = useAuth()
   const [schema, setSchema] = useState("")
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [mockId, setMockId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push("/login")
+    }
+  }, [user, isLoading, router])
 
   const handleGenerate = async () => {
     if (!schema.trim()) return
@@ -55,6 +66,30 @@ export default function Dashboard() {
               <p className="text-xs text-slate-400">AI-Powered Mock API</p>
             </div>
           </div>
+          
+          {/* User Profile & Logout */}
+          {user && (
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                {user.picture && (
+                  <img src={user.picture} alt={user.name} className="w-8 h-8 rounded-full" />
+                )}
+                <div className="text-right">
+                  <p className="text-sm font-semibold text-white">{user.name}</p>
+                  <p className="text-xs text-slate-400">{user.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  logout()
+                  router.push("/login")
+                }}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-semibold transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
